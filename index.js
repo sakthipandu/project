@@ -1,8 +1,5 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const cors = require('cors');
-const multer = require('multer'); 
-const pgp = require('pg-promise');
 const dataRouter = require('./project/router');
 
 const app = express();
