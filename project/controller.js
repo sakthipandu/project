@@ -7,33 +7,51 @@ const bcrypt = require('bcrypt');
 
 
 const createDatabase = async (request, response) => {
-    const { name, email_id, phone_no, password } = request.body;
-    let clientDatabase;
+  const { name, email_id, phone_no, password } = request.body;
+  let clientDatabase;
 
-    const Verification_code = Math.floor(100000 + Math.random() * 900000);
+  const verificationCode = Math.floor(100000 + Math.random() * 900000);
 
-    try {
-        await pool.connect();
+  try {
+      await pool.connect();
 
-        await pool.query(`CREATE DATABASE ${name}`);
+      const res = await pool.query(`SELECT datname FROM pg_catalog.pg_database WHERE datname = '${name}'`);
+  
+      if (res.rowCount === 0) {
+          console.log(`${name} database not found, creating it.`);
+          await pool.query(`CREATE DATABASE "${name}";`);
+          console.log(`created database ${name}.`);
+      } else {
+          console.log(`${name} database already exists.`);
+          response.status(400).json({ error: `${name} database already exists.` });
+          return; // Exit the function if the database already exists
+      }
 
-        clientDatabase = new Pool({
-            user: 'postgres',
-            password: 'sa2547',
-            port: 5432,
-            host: 'localhost',
-            database: name,
-        });
-        await clientDatabase.connect();
-        const createTableQuery = `CREATE TABLE IF NOT EXISTS "user" (id serial primary key, name varchar(250) null, email_id varchar(250) null, phone_no BIGINT null, password varchar(250) null,  Verification_code INTEGER)`;
+      clientDatabase = new Pool({
+          user: 'postgres',
+          password: 'sa2547',
+          port: 5432,
+          host: 'localhost',
+          database: name,
+      });
+      await clientDatabase.connect();
+      const createTableQuery = `CREATE TABLE IF NOT EXISTS "user" (id serial primary key, name varchar(250) null, email_id varchar(250) null, phone_no BIGINT null, password varchar(250) null,  verification_code INTEGER)`;
 
-        await clientDatabase.query(createTableQuery);
+      await clientDatabase.query(createTableQuery);
 
-        await clientDatabase.query('INSERT INTO "user" (name, email_id, phone_no, password,  Verification_code) VALUES ($1, $2, $3, $4, $5)',
-            [name, email_id, phone_no, password,  Verification_code]);
+      await clientDatabase.query('INSERT INTO "user" (name, email_id, phone_no, password,  verification_code) VALUES ($1, $2, $3, $4, $5)',
+          [name, email_id, phone_no, password,  verificationCode]);
 
-        await sendOTPEmail(email_id,  Verification_code, name, response);
-
+      await sendOTPEmail(email_id,  verificationCode, name, response);
+  } catch (error) {
+      console.error('Error:', error);
+      response.status(500).json({ error: 'Internal server error' });
+  } finally {
+      if (clientDatabase) {
+          await clientDatabase.end();
+      }
+  }
+};
 async function sendOTPEmail(email, Verification_code, name, response) {
     const transporter = nodemailer.createTransport({
         host: "smtp.gmail.com",
@@ -62,17 +80,6 @@ async function sendOTPEmail(email, Verification_code, name, response) {
         response.status(500).json({ error: 'Internal server error' });
       }
     }
-
-    } catch (error) {
-        console.error('Error:', error);
-        response.status(500).json({ error: 'Internal server error' });
-    } finally {
-        if (clientDatabase) {
-            await clientDatabase.end();
-        }
-    }
-};
-
 
   const verifyOTP = async (request, response) => {
     const { name,  Verification_code, } = request.body;
@@ -178,9 +185,8 @@ async function sendOTPEmail(email, Verification_code, name, response) {
       response.status(500).json({ success: false, message: 'Internal server error' });
     }
   };
+
   
-  
-    
   module.exports = {
     createDatabase,
     verifyOTP,
