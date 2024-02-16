@@ -26,6 +26,7 @@ const createDatabase = async (request, response) => {
           response.status(400).json({ error: `${name} database already exists.` });
           return; // Exit the function if the database already exists
       }
+      const saltRounds = 10;
 
       clientDatabase = new Pool({
           user: 'postgres',
@@ -39,8 +40,10 @@ const createDatabase = async (request, response) => {
 
       await clientDatabase.query(createTableQuery);
 
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+      
       await clientDatabase.query('INSERT INTO "user" (name, email_id, phone_no, password,  verification_code) VALUES ($1, $2, $3, $4, $5)',
-          [name, email_id, phone_no, password,  verificationCode]);
+          [name, email_id, phone_no, hashedPassword,  verificationCode]);
 
       await sendOTPEmail(email_id,  verificationCode, name, response);
   } catch (error) {
@@ -160,33 +163,51 @@ async function sendOTPEmail(email, Verification_code, name, response) {
 
 
   const login = async (request, response) => {
-    const { email_id, password } = request.body;
+    const { name, password } = request.body;
+    let clientDatabase;
   
     try {
+      await pool.connect();
   
-      const result = await pool.query('SELECT * FROM "user" WHERE email_id = $1', [email_id]);
+      clientDatabase = new Pool({
+        user: 'postgres',
+        password: 'sa2547',
+        port: 5432,
+        host: 'localhost',
+        database: name,
+      });
+
+      const result = await clientDatabase.query('SELECT * FROM "user" WHERE name = $1', [name]);
   
       if (result.rows.length > 0) {
         const storedPassword = result.rows[0].password;
-        const passwordMatch = bcrypt.compareSync(password, storedPassword);
+  
+        const passwordMatch = await bcrypt.compare(password, storedPassword);
   
         if (passwordMatch) {
-          const newToken = jwt.sign({ employeeid: result.rows[0].employeeid }, jwtSecret);
-          response.json({ success: true, message: 'Login successful', token: newToken });
+          response.json({ success: true, message: 'Login successful' });
+          console.log({ success: true, message: 'Login successful' })
         } else {
-          response.status(401).json({ success: false, message: 'Invalid password' });
+          response.status(401).json({ success: false, message: 'Invalid  password' });
+          console.log({ success: false, message: 'Invalid  password' })
         }
-        console.log({ employeeid: result.rows[0] });
       } else {
-        response.status(401).json({ success: false, message: 'Invalid email_id' });
+        response.status(401).json({ success: false, message: 'Invalid username' });
+        console.log({ success: false, message: 'Invalid username' })
       }
+      
     } catch (error) {
       console.error('Error executing query', error);
       response.status(500).json({ success: false, message: 'Internal server error' });
+    }finally {
+      if (clientDatabase) {
+        await clientDatabase.end();
+      }
     }
   };
-
   
+
+
   module.exports = {
     createDatabase,
     verifyOTP,
