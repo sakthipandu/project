@@ -104,7 +104,7 @@ async function sendOTPEmail(email, Verification_code, name, response) {
         response.status(200).json({ message: ' Verification code successfully' });
       }
       else {
-        response.status(400).json({ error: 'Verification code' });
+        response.status(400).json({ error: 'Verification code not match' });
       }
     } 
     catch (error) {
@@ -117,7 +117,6 @@ async function sendOTPEmail(email, Verification_code, name, response) {
       }
     }
   };
-
   
   const getPdf = async (request, response) => {
     const name = request.params.name;
@@ -159,7 +158,6 @@ async function sendOTPEmail(email, Verification_code, name, response) {
       response.status(500).send('Internal Server Error');
     }
   };
-
 
   const login = async (request, response) => {
     const { name, password } = request.body;
