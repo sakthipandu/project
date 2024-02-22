@@ -18,13 +18,12 @@ const createDatabase = async (request, response) => {
       const res = await pool.query(`SELECT datname FROM pg_catalog.pg_database WHERE datname = '${name}'`);
   
       if (res.rowCount === 0) {
-          console.log(`${name} database not found, creating it.`);
           await pool.query(`CREATE DATABASE "${name}";`);
           console.log(`created database ${name}.`);
       } else {
           console.log(`${name} database already exists.`);
           response.status(400).json({ error: `${name} database already exists.` });
-          return; // Exit the function if the database already exists
+          return;
       }
       const saltRounds = 10;
 
@@ -70,7 +69,7 @@ async function sendOTPEmail(email, Verification_code, name, response) {
         from: 'sakthi032vel@gmail.com',
         to: email,
         subject: 'Your Email Verification',
-        html: `<h1><font style="font-family: 'clarendon-fortune-bold'">Verify your email address</font></h1>
+        html: `<h1><font style="font-family: 'arial-bold'">Verify your email address</font></h1>
         <p><font color="black" size="3" style="font-family: 'arial'">Thanks for starting the new KaviWeb account creation process. We want to make sure it's really you. Please enter the following verification code when prompted. If you don’t want to create an account, you can ignore this message. </font></p>
         <p align="center"><font size="4" style="font-family: 'arial'"><strong>Verification code </strong></font><br> <font align="center" size="6" style="font-family: 'arial'"><strong>${Verification_code}</strong></font></p>`
     };
