@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const dataRouter = require('./project/router');
+require('dotenv').config();
 
 const app = express();
 const port = 3000;

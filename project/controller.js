@@ -30,7 +30,7 @@ const createDatabase = async (request, response) => {
       clientDatabase = new Pool({
           user: 'postgres',
           password: 'sa2547',
-          port: 5432,
+          port: 5432, 
           host: 'localhost',
           database: name,
       });
@@ -60,8 +60,8 @@ async function sendOTPEmail(email, Verification_code, name, response) {
         port: 587,
         secure: false,
         auth: {
-            user: 'sakthi032vel@gmail.com',
-            pass: 'ttjzpkoyqhgdzond',
+            user:process.env.MAIL_EMAIL,
+            pass:process.env.MAIL_PASSWORD,
         },
     });
 
@@ -93,7 +93,7 @@ async function sendOTPEmail(email, Verification_code, name, response) {
       clientDatabase = new Pool({
         user: 'postgres',
         password: 'sa2547',
-        port: 5432,
+        port: 5432, 
         host: 'localhost',
         database: name,
       });
@@ -125,7 +125,7 @@ async function sendOTPEmail(email, Verification_code, name, response) {
       dialect: 'postgres',
       username: 'postgres',
       password: 'sa2547',
-      port: 5432,
+      port: 5432, 
       host: 'localhost',
       database: name,
     });
@@ -169,7 +169,7 @@ async function sendOTPEmail(email, Verification_code, name, response) {
       clientDatabase = new Pool({
         user: 'postgres',
         password: 'sa2547',
-        port: 5432,
+        port: 5432, 
         host: 'localhost',
         database: name,
       });
@@ -203,8 +203,6 @@ async function sendOTPEmail(email, Verification_code, name, response) {
     }
   };
   
-
-
   module.exports = {
     createDatabase,
     verifyOTP,
